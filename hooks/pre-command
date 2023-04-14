@@ -1,0 +1,39 @@
+#!/bin/bash
+
+set -euo pipefail
+
+_SOURCE="${BASH_SOURCE[0]}"
+[ -z "${_SOURCE:-}" ] && _SOURCE="${0}"
+BASEDIR="$( cd "$( dirname "${_SOURCE}" )" && cd .. && pwd )"
+
+if [[ -z "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE:-}" ]]; then
+  echo "🚨 Missing 'audience' plugin configuration"
+  exit 1
+fi
+
+if [[ -z "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_SERVICE_ACCOUNT:-}" ]]; then
+  echo "🚨 Missing 'service-account' plugin configuration"
+  exit 1
+fi
+
+echo "--- :buildkite: Requesting OIDC token from Buildkite"
+
+buildkite-agent oidc request-token --audience "$BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE" > "$BASEDIR"/token.json
+
+echo "--- :gcp: Configuring Google Cloud credentials"
+
+cat << JSON > "$BASEDIR"/credentials.json
+{
+  "type": "external_account",
+  "audience": "$BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE",
+  "subject_token_type": "urn:ietf:params:oauth:token-type:jwt",
+  "token_url": "https://sts.googleapis.com/v1/token",
+  "service_account_impersonation_url": "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/$BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_SERVICE_ACCOUNT:generateAccessToken",
+  "credential_source": {
+    "file": "$BASEDIR/token.json"
+  }
+}
+JSON
+
+export GOOGLE_APPLICATION_CREDENTIALS=$BASEDIR/credentials.json
+export CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE=$GOOGLE_APPLICATION_CREDENTIALS
