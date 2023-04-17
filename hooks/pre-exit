@@ -3,5 +3,7 @@
 set -euo pipefail
 
 if [[ -z "$BUILDKITE_OIDC_TMPDIR" ]]; then
-  rm -rf $BUILDKITE_OIDC_TMPDIR
+  rm -rf "$BUILDKITE_OIDC_TMPDIR"
+
+  echo "Removed credentials from $BUILDKITE_OIDC_TMPDIR"
 fi
