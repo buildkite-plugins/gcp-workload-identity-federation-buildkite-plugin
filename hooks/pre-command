@@ -19,7 +19,7 @@ echo "--- :buildkite: Requesting OIDC token from Buildkite"
 
 buildkite-agent oidc request-token --audience "$BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE" > "$TMPDIR"/token.json
 
-echo "--- :gcp: Configuring Google Cloud credentials"
+echo "--- :gcloud: Configuring Google Cloud credentials"
 
 cat << JSON > "$TMPDIR"/credentials.json
 {
