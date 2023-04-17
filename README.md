@@ -26,13 +26,19 @@ You should already have a Google Cloud project and a Service Account to assume. 
 
 3. Configure provider attributes.
 
-   We suggest the following mapping:
+   Because Google limits the length of attributes to 127 characters, we suggest the following mapping:
 
    | Google | OIDC |
    | --- | --- |
-   | google.subject | assertion.sub |
-   | attribute.pipeline_slug | assertion.pipeline_slug |
-   | attribute.build_branch | assertion.build_branch |
+   | `google.subject` | `"organization:" + assertion.sub.split(":")[1] + ":pipeline:" + assertion.sub.split(":")[3]` |
+   | `attribute.pipeline_slug` | `assertion.pipeline_slug` |
+   | `attribute.build_branch` | `assertion.build_branch` |
+
+   With this mapping you can use a [CEL](https://github.com/google/cel-spec) expression to restrict which pipelines can assume the service account:
+
+   ```cel
+   google.subject == "organization:acme:pipeline:buildkite-example-pipeline"
+   ```
 
 4. Grant access to the service account.
 
