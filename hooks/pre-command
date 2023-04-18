@@ -15,11 +15,11 @@ if [[ -z "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_SERVICE_ACCOUNT:-}
   exit 1
 fi
 
-echo "--- :buildkite: Requesting OIDC token from Buildkite"
+echo "~~~ :buildkite: Requesting OIDC token from Buildkite"
 
 buildkite-agent oidc request-token --audience "$BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE" > "$TMPDIR"/token.json
 
-echo "--- :gcloud: Configuring Google Cloud credentials"
+echo "~~~ :gcloud: Configuring Google Cloud credentials"
 
 cat << JSON > "$TMPDIR"/credentials.json
 {
