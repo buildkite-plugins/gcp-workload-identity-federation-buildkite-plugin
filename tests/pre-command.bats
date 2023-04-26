@@ -8,8 +8,9 @@ setup() {
     export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE="//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
     export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_SERVICE_ACCOUNT="buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com"
 
-    TMPREGEX="Wrote credentials to (/tmp/tmp\.[a-zA-Z0-9]+)"
+    TMPDIR="/tmp"
 
+    stub mktemp "echo $TMPDIR"
     stub buildkite-agent "oidc request-token --audience //iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite : echo dummy-jwt"
 
     run "$PWD/hooks/pre-command"
@@ -19,9 +20,7 @@ setup() {
     assert_output --partial "Requesting OIDC token from Buildkite"
     assert_output --partial "Configuring Google Cloud credentials"
 
-    [[ $output =~ $TMPREGEX ]]
-    TMPDIR="${BASH_REMATCH[1]}"
-    
+    diff $TMPDIR/token.json <(echo dummy-jwt)
     diff $TMPDIR/credentials.json <(cat << JSON
 {
   "type": "external_account",
@@ -34,7 +33,7 @@ setup() {
   }
 }
 JSON)
-    diff $TMPDIR/token.json <(echo dummy-jwt)
 
+    unstub mktemp
     unstub buildkite-agent
 }
