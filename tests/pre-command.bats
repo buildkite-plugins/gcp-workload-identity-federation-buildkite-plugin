@@ -19,10 +19,10 @@ setup() {
     assert_output --partial "Requesting OIDC token from Buildkite"
     assert_output --partial "Configuring Google Cloud credentials"
 
-    if [[ $output =~ $TMPREGEX ]]; then
-      TMPDIR="${BASH_REMATCH[1]}"
-
-      diff $TMPDIR/credentials.json <(cat << JSON
+    [[ $output =~ $TMPREGEX ]]
+    TMPDIR="${BASH_REMATCH[1]}"
+    
+    diff $TMPDIR/credentials.json <(cat << JSON
 {
   "type": "external_account",
   "audience": "//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite",
@@ -34,11 +34,7 @@ setup() {
   }
 }
 JSON)
-      diff $TMPDIR/token.json <(echo dummy-jwt)
-    else
-      echo "output did not match regex"
-      exit 1
-    fi
+    diff $TMPDIR/token.json <(echo dummy-jwt)
 
     unstub buildkite-agent
 }
