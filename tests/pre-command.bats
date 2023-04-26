@@ -4,7 +4,35 @@ setup() {
   load "$BATS_PLUGIN_PATH/load.bash"
 }
 
-@test "Exports credentials" {
+@test "fails when mktemp fails" {
+    export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE="//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
+    export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_SERVICE_ACCOUNT="buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com"
+
+    stub mktemp "exit 1"
+    stub mktemp "exit 1"
+
+    run "$PWD/hooks/pre-command"
+
+    assert_failure
+}
+
+@test "fails when audience is missing" {
+    export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_SERVICE_ACCOUNT="buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com"
+
+    run "$PWD/hooks/pre-command"
+
+    assert_failure
+}
+
+@test "fails when service account is missing" {
+    export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE="//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
+
+    run "$PWD/hooks/pre-command"
+
+    assert_failure
+}
+
+@test "exports credentials" {
     export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE="//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
     export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_SERVICE_ACCOUNT="buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com"
 
