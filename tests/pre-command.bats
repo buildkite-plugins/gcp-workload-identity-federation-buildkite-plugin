@@ -12,8 +12,8 @@ setup() {
     export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE="//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
     export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_SERVICE_ACCOUNT="buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com"
 
-    stub mktemp "exit 1"
-    stub mktemp "exit 1"
+    stub mktemp "-d : exit 1"
+    stub mktemp "-d -t 'buildkiteXXXX' : exit 1"
 
     run "$PWD/hooks/pre-command"
 
@@ -36,11 +36,27 @@ setup() {
     assert_failure
 }
 
+@test "succeeds when mktemp fails once" {
+    export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE="//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
+    export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_SERVICE_ACCOUNT="buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com"
+
+    stub mktemp "-d : exit 1"
+    stub mktemp "-d -t 'buildkiteXXXX' : echo $BATS_TEST_TMPDIR"
+    stub buildkite-agent "echo dummy-jwt"
+
+    run "$PWD/hooks/pre-command"
+
+    assert_success
+
+    unstub mktemp
+    unstub buildkite-agent
+}
+
 @test "exports credentials" {
     export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE="//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
     export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_SERVICE_ACCOUNT="buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com"
 
-    stub mktemp "echo $BATS_TEST_TMPDIR"
+    stub mktemp "-d : echo $BATS_TEST_TMPDIR"
     stub buildkite-agent "oidc request-token --audience //iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite : echo dummy-jwt"
 
     run "$PWD/hooks/pre-command"
