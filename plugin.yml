@@ -1,0 +1,17 @@
+name: gcp-workload-identity-federation
+description: Grant pipelines access to Google Cloud resources using Workload Identity Federation
+author: https://github.com/buildkite-plugins
+public: true
+requirements:
+  - bash
+  - buildkite-agent
+configuration:
+  properties:
+    audience:
+      type: string
+    service-account:
+      type: string
+  required:
+    - audience
+    - service-account
+  additionalProperties: false

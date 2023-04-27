@@ -1,0 +1,9 @@
+#!/bin/bash
+
+set -euo pipefail
+
+if [[ -v BUILDKITE_OIDC_TMPDIR ]]; then
+  rm -rf "$BUILDKITE_OIDC_TMPDIR"
+
+  echo "Removed credentials from $BUILDKITE_OIDC_TMPDIR"
+fi
