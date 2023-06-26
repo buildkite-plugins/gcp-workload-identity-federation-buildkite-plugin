@@ -1,4 +1,4 @@
-# Google Cloud Workload Identity Federation Buildkite Plugin
+# Google Cloud Workload Identity Federation Buildkite Plugin [![Build status](https://badge.buildkite.com/480c7800bfe6ff5e72c2aae517e6d25da9c2e21b04b2de8e12.svg)](https://buildkite.com/buildkite/plugins-gcp-workload-identity-federation)
 
 A Buildkite plugin to assume a Google Cloud service account using [workload identity federation](https://cloud.google.com/iam/docs/workload-identity-federation).
 
