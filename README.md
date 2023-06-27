@@ -68,6 +68,10 @@ steps:
 
 - The service account for which you want to acquire an access token.
 
+### `lifetime` (number)
+
+- The time (in seconds) the OIDC token will be valid for before expiry. Must be a non-negative integer. If the flag is omitted or set to 0, the API will choose a default finite lifetime. (default: 0)
+
 ## Developing
 
 To run testing, shellchecks and plugin linting use use `bk run` with the [Buildkite CLI](https://github.com/buildkite/cli).
