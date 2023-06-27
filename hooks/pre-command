@@ -17,7 +17,7 @@ TMPDIR=$(mktemp -d 2>/dev/null || mktemp -d -t 'buildkiteXXXX')
 
 echo "~~~ :buildkite: Requesting OIDC token from Buildkite"
 
-buildkite-agent oidc request-token --audience "$BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE" > "$TMPDIR"/token.json
+buildkite-agent oidc request-token --audience "$BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE" --lifetime "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_LIFETIME:-0}" > "$TMPDIR"/token.json
 
 echo "~~~ :gcloud: Configuring Google Cloud credentials"
 

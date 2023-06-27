@@ -11,6 +11,8 @@ configuration:
       type: string
     service-account:
       type: string
+    lifetime:
+      type: number
   required:
     - audience
     - service-account
