@@ -13,6 +13,8 @@ configuration:
       type: string
     lifetime:
       type: number
+    render-command:
+      type: string
   required:
     - audience
     - service-account

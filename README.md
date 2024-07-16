@@ -72,6 +72,10 @@ steps:
 
 - The time (in seconds) the OIDC token will be valid for before expiry. Must be a non-negative integer. If the flag is omitted or set to 0, the API will choose a default finite lifetime. (default: 0)
 
+### `render-command` (string)
+
+- An installed binary that when specified, will run twice to process the values of `audience` and `service-account` via stdin.  This is intended to be used to render environment variables with an application such as `envsubst`. (default: '')
+
 ## Developing
 
 To run testing, shellchecks and plugin linting use use `bk run` with the [Buildkite CLI](https://github.com/buildkite/cli).
