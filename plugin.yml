@@ -15,6 +15,10 @@ configuration:
       type: number
     render-command:
       type: string
+    claims:
+      type: array
+      items:
+        type: string
   required:
     - audience
     - service-account

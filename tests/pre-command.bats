@@ -128,3 +128,103 @@ JSON)
     unstub mktemp
     unstub buildkite-agent
 }
+
+@test "exports credentials with optional claim organization id" {
+    export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE="//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
+    export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_SERVICE_ACCOUNT="buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com"
+    export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_CLAIMS_0="organization_id"
+
+    stub mktemp "-d : echo $BATS_TEST_TMPDIR"
+    stub buildkite-agent "oidc request-token --audience //iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite --lifetime 0 --claim organization_id : echo dummy-jwt"
+
+    run "$PWD/hooks/pre-command"
+
+    assert_success
+
+    assert_output --partial "Requesting OIDC token from Buildkite"
+    assert_output --partial "Configuring Google Cloud credentials"
+
+    diff $BATS_TEST_TMPDIR/token.json <(echo dummy-jwt)
+    diff $BATS_TEST_TMPDIR/credentials.json <(cat << JSON
+{
+  "type": "external_account",
+  "audience": "//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite",
+  "subject_token_type": "urn:ietf:params:oauth:token-type:jwt",
+  "token_url": "https://sts.googleapis.com/v1/token",
+  "service_account_impersonation_url": "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com:generateAccessToken",
+  "credential_source": {
+    "file": "$BATS_TEST_TMPDIR/token.json"
+  }
+}
+JSON)
+
+    unstub mktemp
+    unstub buildkite-agent
+}
+
+@test "exports credentials with optional claim pipeline id" {
+    export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE="//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
+    export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_SERVICE_ACCOUNT="buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com"
+    export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_CLAIMS_0="pipeline_id"
+
+    stub mktemp "-d : echo $BATS_TEST_TMPDIR"
+    stub buildkite-agent "oidc request-token --audience //iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite --lifetime 0 --claim pipeline_id : echo dummy-jwt"
+
+    run "$PWD/hooks/pre-command"
+
+    assert_success
+
+    assert_output --partial "Requesting OIDC token from Buildkite"
+    assert_output --partial "Configuring Google Cloud credentials"
+
+    diff $BATS_TEST_TMPDIR/token.json <(echo dummy-jwt)
+    diff $BATS_TEST_TMPDIR/credentials.json <(cat << JSON
+{
+  "type": "external_account",
+  "audience": "//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite",
+  "subject_token_type": "urn:ietf:params:oauth:token-type:jwt",
+  "token_url": "https://sts.googleapis.com/v1/token",
+  "service_account_impersonation_url": "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com:generateAccessToken",
+  "credential_source": {
+    "file": "$BATS_TEST_TMPDIR/token.json"
+  }
+}
+JSON)
+
+    unstub mktemp
+    unstub buildkite-agent
+}
+
+@test "exports credentials with optional claims organization_id and pipeline id" {
+    export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE="//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
+    export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_SERVICE_ACCOUNT="buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com"
+    export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_CLAIMS_0="organization_id"
+    export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_CLAIMS_1="pipeline_id"
+
+    stub mktemp "-d : echo $BATS_TEST_TMPDIR"
+    stub buildkite-agent "oidc request-token --audience //iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite --lifetime 0 --claim organization_id --claim pipeline_id : echo dummy-jwt"
+
+    run "$PWD/hooks/pre-command"
+
+    assert_success
+
+    assert_output --partial "Requesting OIDC token from Buildkite"
+    assert_output --partial "Configuring Google Cloud credentials"
+
+    diff $BATS_TEST_TMPDIR/token.json <(echo dummy-jwt)
+    diff $BATS_TEST_TMPDIR/credentials.json <(cat << JSON
+{
+  "type": "external_account",
+  "audience": "//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite",
+  "subject_token_type": "urn:ietf:params:oauth:token-type:jwt",
+  "token_url": "https://sts.googleapis.com/v1/token",
+  "service_account_impersonation_url": "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com:generateAccessToken",
+  "credential_source": {
+    "file": "$BATS_TEST_TMPDIR/token.json"
+  }
+}
+JSON)
+
+    unstub mktemp
+    unstub buildkite-agent
+}

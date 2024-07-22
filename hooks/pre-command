@@ -2,6 +2,13 @@
 
 set -euo pipefail
 
+DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)"
+
+# shellcheck source=lib/shared.bash
+. "$DIR/../lib/shared.bash"
+
+args=()
+
 if [[ -z "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE:-}" ]]; then
   echo "🚨 Missing 'audience' plugin configuration"
   exit 1
@@ -22,12 +29,21 @@ if [[ -n "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_RENDER_COMMAND:-}"
   BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_SERVICE_ACCOUNT="$(echo "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_SERVICE_ACCOUNT}" | ${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_RENDER_COMMAND})"
 fi
 
+# add required arguments
+args+=("--audience" "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE}")
+args+=("--lifetime" "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_LIFETIME:-0}")
+
+# Parse the list of optional claims to pass to the token request command
+while read -r line ; do
+  [[ -n "$line" ]] && args+=("--claim" "$line")
+done <<< "$(plugin_read_list CLAIMS)"
+
 # Create a temporary directory with both BSD and GNU mktemp
 TMPDIR=$(mktemp -d 2>/dev/null || mktemp -d -t 'buildkiteXXXX')
 
 echo "~~~ :buildkite: Requesting OIDC token from Buildkite"
 
-buildkite-agent oidc request-token --audience "$BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE" --lifetime "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_LIFETIME:-0}" > "$TMPDIR"/token.json
+buildkite-agent oidc request-token ${args[@]} > "$TMPDIR"/token.json
 
 echo "~~~ :gcloud: Configuring Google Cloud credentials"
 
