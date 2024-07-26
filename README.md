@@ -2,9 +2,71 @@
 
 A Buildkite plugin to assume a Google Cloud service account using [workload identity federation](https://cloud.google.com/iam/docs/workload-identity-federation).
 
-The plugin requests an OIDC token from Buildkite and uses it to a populate Google Cloud credentials file.
+The plugin requests an OIDC token from Buildkite and uses it to a populate Google Cloud credentials file assuming you have followed the [corresponding setup on Google cloud](#google-cloud-configuration).
 
 The path to the file is populated in `GOOGLE_APPLICATION_CREDENTIALS` for SDKs that use [Application Default Credentials](https://cloud.google.com/docs/authentication/application-default-credentials), and in `CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE` for the `gcloud` CLI.
+
+## Configuration
+
+### `audience` (Required, string)
+
+- The default audience as shown on the Workload Identity Federation Provider page, without the `https:` prefix, or a custom audience that you configure.
+
+### `service-account` (Required, string)
+
+- The service account for which you want to acquire an access token.
+
+### `lifetime` (number)
+
+- The time (in seconds) the OIDC token will be valid for before expiry. Must be a non-negative integer. If the flag is omitted or set to 0, the API will choose a default finite lifetime. (default: 0)
+
+### `render-command` (string)
+
+- An installed binary that when specified, will run twice to process the values of `audience` and `service-account` via stdin.  This is intended to be used to render environment variables with an application such as `envsubst`. (default: '')
+
+## Example
+
+Add the following to your `pipeline.yml`:
+
+```yml
+steps:
+  - command: |
+      echo "Credentials are located at \$GOOGLE_APPLICATION_CREDENTIALS"
+    plugins:
+      - gcp-workload-identity-federation#v1.1.0:
+          audience: "//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
+          service-account: "buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com"
+```
+
+## Usage with docker (compose) plugins
+
+For the token to be available in the container(s) run by docker when using those plugins in the same step as this one, you will need to make sure to share the following with the containers:
+* the volume `$BUILDKITE_OIDC_TMPDIR`
+* the following environment variables:
+   - `BUILDKITE_OIDC_TMPDIR`
+   - `CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE` (if using `gcloud`)
+   - `GOOGLE_APPLICATION_CREDENTIALS` (if using any other gcp lib)
+
+For example:
+
+```
+steps:
+  - command: |
+      echo "Credentials are located at \$GOOGLE_APPLICATION_CREDENTIALS or \$CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE"
+    plugins:
+      - gcp-workload-identity-federation#v1.1.0:
+          audience: "//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
+          service-account: "buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com"
+      - docker#v5.9.0:
+          image: <IMAGE>
+          expand-volume-vars: true
+          volumes:
+            - \$BUILDKITE_OIDC_TMPDIR:/\$BUILDKITE_OIDC_TMPDIR
+          environment:
+            - BUILDKITE_OIDC_TMPDIR
+            - CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE  # if using 'gcloud'
+            - GOOGLE_APPLICATION_CREDENTIALS          # if using literally any other gcp lib
+```
 
 ## Google Cloud configuration
 
@@ -57,24 +119,6 @@ steps:
           audience: "//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
           service-account: "buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com"
 ```
-
-## Configuration
-
-### `audience` (Required, string)
-
-- The default audience as shown on the Workload Identity Federation Provider page, without the `https:` prefix, or a custom audience that you configure.
-
-### `service-account` (Required, string)
-
-- The service account for which you want to acquire an access token.
-
-### `lifetime` (number)
-
-- The time (in seconds) the OIDC token will be valid for before expiry. Must be a non-negative integer. If the flag is omitted or set to 0, the API will choose a default finite lifetime. (default: 0)
-
-### `render-command` (string)
-
-- An installed binary that when specified, will run twice to process the values of `audience` and `service-account` via stdin.  This is intended to be used to render environment variables with an application such as `envsubst`. (default: '')
 
 ## Developing
 
