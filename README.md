@@ -33,7 +33,7 @@ steps:
   - command: |
       echo "Credentials are located at \$GOOGLE_APPLICATION_CREDENTIALS"
     plugins:
-      - gcp-workload-identity-federation#v1.1.0:
+      - gcp-workload-identity-federation#v1.2.0:
           audience: "//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
           service-account: "buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com"
 ```
@@ -49,12 +49,12 @@ For the token to be available in the container(s) run by docker when using those
 
 For example:
 
-```
+```yml
 steps:
   - command: |
       echo "Credentials are located at \$GOOGLE_APPLICATION_CREDENTIALS or \$CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE"
     plugins:
-      - gcp-workload-identity-federation#v1.1.0:
+      - gcp-workload-identity-federation#v1.2.0:
           audience: "//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
           service-account: "buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com"
       - docker#v5.9.0:
@@ -115,7 +115,7 @@ steps:
   - command: |
       echo "Credentials are located at \$GOOGLE_APPLICATION_CREDENTIALS"
     plugins:
-      - gcp-workload-identity-federation#v1.1.0:
+      - gcp-workload-identity-federation#v1.2.0:
           audience: "//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
           service-account: "buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com"
 ```
