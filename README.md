@@ -24,6 +24,10 @@ The path to the file is populated in `GOOGLE_APPLICATION_CREDENTIALS` for SDKs t
 
 - An installed binary that when specified, will run twice to process the values of `audience` and `service-account` via stdin.  This is intended to be used to render environment variables with an application such as `envsubst`. (default: '')
 
+### `claims` (list(string))
+
+- A list of [claims to add to the requested buildkite oidc token](https://buildkite.com/docs/agent/v3/cli-oidc#claims-optional-claims). The agent currently supports requesting claims for `organization_id` and `pipeline_id`. If requested, these will include the respective buildkite organization and/or pipeline UUID claims in the token. (default: [])
+
 ## Example
 
 Add the following to your `pipeline.yml`:
