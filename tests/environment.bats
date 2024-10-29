@@ -15,7 +15,7 @@ setup() {
     stub mktemp "-d : exit 1"
     stub mktemp "-d -t 'buildkiteXXXX' : exit 1"
 
-    run "$PWD/hooks/pre-command"
+    run "$PWD/hooks/environment"
 
     assert_failure
 }
@@ -23,7 +23,7 @@ setup() {
 @test "fails when audience is missing" {
     export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_SERVICE_ACCOUNT="buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com"
 
-    run "$PWD/hooks/pre-command"
+    run "$PWD/hooks/environment"
 
     assert_failure
 }
@@ -31,7 +31,7 @@ setup() {
 @test "fails when service account is missing" {
     export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE="//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
 
-    run "$PWD/hooks/pre-command"
+    run "$PWD/hooks/environment"
 
     assert_failure
 }
@@ -41,7 +41,7 @@ setup() {
     export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_SERVICE_ACCOUNT="buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com"
     export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_RENDER_COMMAND="this-file-purposely-does-not-exist"
 
-    run "$PWD/hooks/pre-command"
+    run "$PWD/hooks/environment"
 
     assert_failure
 }
@@ -54,7 +54,7 @@ setup() {
     stub mktemp "-d -t 'buildkiteXXXX' : echo $BATS_TEST_TMPDIR"
     stub buildkite-agent "echo dummy-jwt"
 
-    run "$PWD/hooks/pre-command"
+    run "$PWD/hooks/environment"
 
     assert_success
 
@@ -69,7 +69,7 @@ setup() {
     stub mktemp "-d : echo $BATS_TEST_TMPDIR"
     stub buildkite-agent "oidc request-token --audience //iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite --lifetime 0 : echo dummy-jwt"
 
-    run "$PWD/hooks/pre-command"
+    run "$PWD/hooks/environment"
 
     assert_success
 
@@ -104,7 +104,7 @@ JSON)
     stub mktemp "-d : echo $BATS_TEST_TMPDIR"
     stub buildkite-agent "oidc request-token --audience //iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite --lifetime 0 : echo dummy-jwt"
 
-    run "$PWD/hooks/pre-command"
+    run "$PWD/hooks/environment"
 
     assert_success
 
@@ -137,7 +137,7 @@ JSON)
     stub mktemp "-d : echo $BATS_TEST_TMPDIR"
     stub buildkite-agent "oidc request-token --audience //iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite --lifetime 0 --claim organization_id : echo dummy-jwt"
 
-    run "$PWD/hooks/pre-command"
+    run "$PWD/hooks/environment"
 
     assert_success
 
@@ -170,7 +170,7 @@ JSON)
     stub mktemp "-d : echo $BATS_TEST_TMPDIR"
     stub buildkite-agent "oidc request-token --audience //iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite --lifetime 0 --claim pipeline_id : echo dummy-jwt"
 
-    run "$PWD/hooks/pre-command"
+    run "$PWD/hooks/environment"
 
     assert_success
 
@@ -204,7 +204,7 @@ JSON)
     stub mktemp "-d : echo $BATS_TEST_TMPDIR"
     stub buildkite-agent "oidc request-token --audience //iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite --lifetime 0 --claim organization_id --claim pipeline_id : echo dummy-jwt"
 
-    run "$PWD/hooks/pre-command"
+    run "$PWD/hooks/environment"
 
     assert_success
 
