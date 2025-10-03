@@ -2,6 +2,8 @@
 
 set -euo pipefail
 
+# this should run regardless of the hook configuration as it will need to be
+# cleaned up in both cases.
 if [[ -n "${BUILDKITE_OIDC_TMPDIR:-}" ]]; then
   rm -rf "$BUILDKITE_OIDC_TMPDIR"
 

@@ -1,0 +1,16 @@
+#!/bin/bash
+
+set -euo pipefail
+
+# run plugin in the pre-command hook if specified
+if [[ "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_HOOK:-}" == "pre-command" ]]; then
+  echo "Running in the pre-command hook"
+else
+  echo "Skipping pre-command hook"
+  exit 0
+fi
+
+DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)"
+
+# shellcheck source=lib/plugin.bash
+. "$DIR/../lib/plugin.bash"

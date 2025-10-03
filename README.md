@@ -12,9 +12,15 @@ The path to the file is populated in `GOOGLE_APPLICATION_CREDENTIALS` for SDKs t
 
 - The default audience as shown on the Workload Identity Federation Provider page, without the `https:` prefix, or a custom audience that you configure.
 
-### `service-account` (Required, string)
+### `claims` (list(string))
 
-- The service account for which you want to acquire an access token.
+- A list of [claims to add to the requested buildkite oidc token](https://buildkite.com/docs/agent/v3/cli-oidc#claims-optional-claims). The agent currently supports requesting claims for `organization_id` and `pipeline_id`. If requested, these will include the respective buildkite organization and/or pipeline UUID claims in the token. (default: [])
+
+### `hook` (string)
+
+- Which [lifecycle hook phase](https://buildkite.com/docs/agent/v3/hooks#job-lifecycle-hooks) to run the plugin during. This can be either `environment` (default) or `pre-command`.
+
+- This is useful when running this plugin with the [artifacts](https://github.com/buildkite-plugins/artifacts-buildkite-plugin) plugin. When using both plugins it may be useful to run this plugin after the artifacts plugin. Running this plugin after allows using the runner's pre-configured credentials to fetch artifacts before switching to credentials used during the command step. When running the plugin in the `pre-command` hook, you may need to ensure it is ordered after the artifact plugin.
 
 ### `lifetime` (number)
 
@@ -24,9 +30,9 @@ The path to the file is populated in `GOOGLE_APPLICATION_CREDENTIALS` for SDKs t
 
 - An installed binary that when specified, will run twice to process the values of `audience` and `service-account` via stdin.  This is intended to be used to render environment variables with an application such as `envsubst`. (default: '')
 
-### `claims` (list(string))
+### `service-account` (Required, string)
 
-- A list of [claims to add to the requested buildkite oidc token](https://buildkite.com/docs/agent/v3/cli-oidc#claims-optional-claims). The agent currently supports requesting claims for `organization_id` and `pipeline_id`. If requested, these will include the respective buildkite organization and/or pipeline UUID claims in the token. (default: [])
+- The service account for which you want to acquire an access token.
 
 ## Example
 

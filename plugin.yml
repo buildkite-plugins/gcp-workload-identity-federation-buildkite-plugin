@@ -9,16 +9,18 @@ configuration:
   properties:
     audience:
       type: string
-    service-account:
+    claims:
+      type: array
+      items:
+        type: string
+    hook:
       type: string
     lifetime:
       type: number
     render-command:
       type: string
-    claims:
-      type: array
-      items:
-        type: string
+    service-account:
+      type: string
   required:
     - audience
     - service-account
