@@ -1,0 +1,18 @@
+#!/bin/bash
+
+set -euo pipefail
+
+# run cleanup in post-command hook if we were run in pre-command
+if [[ "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_HOOK:-}" == "pre-command" ]]; then
+  echo "Running in the post-command hook"
+else
+  echo "Skipping post-command hook"
+  exit 0
+fi
+
+# We need to unset the gcloud env vars to ensure the credentials are not used
+# post command. This is necessary when we want to switch to credentials provided
+# by the agent for use in subsequent plugins. We can leave the credentials file
+# to be cleaned up later as it is not in a known location.
+unset GOOGLE_APPLICATION_CREDENTIALS
+unset CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE
