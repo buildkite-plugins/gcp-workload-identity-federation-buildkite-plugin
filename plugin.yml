@@ -13,12 +13,6 @@ configuration:
       type: array
       items:
         type: string
-    environment:
-      type: string
-      enum:
-        - dev
-        - sit
-        - prod
     gcp-project-id:
       type: string
     hook:
@@ -36,7 +30,6 @@ configuration:
       type: string
   required:
     - audience
-    - environment
     - gcp-project-id
     - mode
   additionalProperties: false
