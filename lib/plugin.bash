@@ -10,7 +10,7 @@ DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)"
 args=()
 
 if [[ -z "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE:-}" ]]; then
-  echo "🚨 Missing 'audience' plugin configuration"
+  warn "🚨 Missing 'audience' plugin configuration"
   exit 1
 fi
 
@@ -21,7 +21,7 @@ if [[ -n "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_SERVICE_ACCOUNT:-}
 else
   # Construct service account from parameters
   if [[ -z "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_GCP_PROJECT_ID:-}" ]]; then
-    echo "🚨 Missing 'gcp-project-id' plugin configuration"
+    warn "🚨 Missing 'gcp-project-id' plugin configuration"
     exit 1
   else
     case "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_GCP_PROJECT_ID}" in
@@ -29,7 +29,7 @@ else
       *sit*) BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_ENVIRONMENT="sit" ;;
       *prod*) BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_ENVIRONMENT="prod" ;;
       *)
-        echo "🚨 Could not infer environment from 'gcp-project-id' plugin configuration. Please ensure it contains one of 'dev', 'sit', or 'prod'."
+        warn "🚨 Could not infer environment from 'gcp-project-id' plugin configuration. Please ensure it contains one of 'dev', 'sit', or 'prod'."
         exit 1
         ;;
     esac
@@ -42,19 +42,19 @@ else
   fi
 
   if [[ -z "${BUILDKITE_PIPELINE_SLUG:-}" ]]; then
-    echo "🚨 BUILDKITE_PIPELINE_SLUG environment variable is not set"
+    warn "🚨 BUILDKITE_PIPELINE_SLUG environment variable is not set"
     exit 1
   fi
 
   # Construct service account: <buildkite_slug>-<env>-<ro|rw>@<gcp_project_id>.iam.gserviceaccount.com
   SERVICE_ACCOUNT="${BUILDKITE_PIPELINE_SLUG}-${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_ENVIRONMENT}-${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_MODE}@${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_GCP_PROJECT_ID}.iam.gserviceaccount.com"
-  echo "📧 Constructed service account: ${SERVICE_ACCOUNT}"
+  info "📧 Constructed service account: ${SERVICE_ACCOUNT}"
 fi
 
 if [[ -n "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_RENDER_COMMAND:-}" ]]; then
   # Test that the given command exists, otherwise fail
   command -v "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_RENDER_COMMAND}" || {
-    echo "🚨 Render command file '${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_RENDER_COMMAND}' not found"
+    warn "🚨 Render command file '${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_RENDER_COMMAND}' not found"
     exit 1
   }
   BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE="$(echo "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE}" | ${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_RENDER_COMMAND})"
@@ -73,12 +73,11 @@ done <<< "$(plugin_read_list CLAIMS)"
 # Create a temporary directory with both BSD and GNU mktemp
 TMPDIR=$(mktemp -d 2>/dev/null || mktemp -d -t 'buildkiteXXXX')
 
-echo "~~~ :buildkite: Requesting OIDC token from Buildkite"
+info "~~~ :buildkite: Requesting OIDC token from Buildkite"
 
 buildkite-agent oidc request-token "${args[@]}" > "$TMPDIR"/token.json
 
-echo "~~~ :gcloud: Configuring Google Cloud credentials"
-
+info "~~~ :gcloud: Configuring Google Cloud credentials"
 cat << JSON > "$TMPDIR"/credentials.json
 {
   "type": "external_account",
