@@ -16,10 +16,6 @@ The path to the file is populated in `GOOGLE_APPLICATION_CREDENTIALS` for SDKs t
 
 - The GCP project ID where the service account exists. This is used to construct the service account email address.
 
-### `mode` (Required, string)
-
-- The access mode for the service account. Must be either `ro` (read-only) or `rw` (read-write). This is used to construct the service account email address.
-
 ### `claims` (list(string))
 
 - A list of [claims to add to the requested buildkite oidc token](https://buildkite.com/docs/agent/v3/cli-oidc#claims-optional-claims). The agent currently supports requesting claims for `organization_id` and `pipeline_id`. If requested, these will include the respective buildkite organization and/or pipeline UUID claims in the token. (default: [])
