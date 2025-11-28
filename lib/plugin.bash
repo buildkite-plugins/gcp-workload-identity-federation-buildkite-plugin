@@ -35,9 +35,10 @@ else
     esac
   fi
 
-  if [[ -z "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_MODE:-}" ]]; then
-    echo "🚨 Missing 'mode' plugin configuration (must be 'ro' or 'rw')"
-    exit 1
+  if [[ "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_ENVIRONMENT}" == "prod" && "${BUILDKITE_BRANCH}" != "main" ]]; then
+    BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_MODE="ro"
+  else
+    BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_MODE="rw"
   fi
 
   if [[ -z "${BUILDKITE_PIPELINE_SLUG:-}" ]]; then

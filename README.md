@@ -16,10 +16,6 @@ The path to the file is populated in `GOOGLE_APPLICATION_CREDENTIALS` for SDKs t
 
 - The GCP project ID where the service account exists. This is used to construct the service account email address.
 
-### `environment` (Required, string)
-
-- The environment identifier (Must be one of `dev`, `sit`, `prod`). This is used to construct the service account email address.
-
 ### `mode` (Required, string)
 
 - The access mode for the service account. Must be either `ro` (read-only) or `rw` (read-write). This is used to construct the service account email address.
@@ -58,8 +54,6 @@ steps:
       - gcp-workload-identity-federation#v1.5.0:
           audience: "//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
           gcp-project-id: "my-gcp-project"
-          environment: "prod"
-          mode: "ro"
 ```
 
 The plugin will automatically construct the service account as: `<pipeline-slug>-prod-ro@my-gcp-project.iam.gserviceaccount.com`
@@ -95,8 +89,6 @@ steps:
       - gcp-workload-identity-federation#v1.5.0:
           audience: "//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
           gcp-project-id: "my-gcp-project"
-          environment: "prod"
-          mode: "rw"
       - docker#v5.9.0:
           image: <IMAGE>
           expand-volume-vars: true
@@ -156,11 +148,7 @@ The plugin automatically constructs service account names using the following fo
 
 Where:
 - `<pipeline-slug>` is automatically extracted from the `BUILDKITE_PIPELINE_SLUG` environment variable
-- `<environment>` is the value you provide (e.g., `dev`, `staging`, `prod`)
-- `<mode>` is either `ro` (read-only) or `rw` (read-write)
 - `<gcp-project-id>` is your GCP project ID
-
-For example, if your pipeline slug is `my-app`, environment is `prod`, mode is `ro`, and project ID is `my-gcp-project`, the service account will be:
 ```
 my-app-prod-ro@my-gcp-project.iam.gserviceaccount.com
 ```
