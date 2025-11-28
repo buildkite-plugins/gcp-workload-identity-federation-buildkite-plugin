@@ -34,10 +34,6 @@ The path to the file is populated in `GOOGLE_APPLICATION_CREDENTIALS` for SDKs t
 
 - An installed binary that when specified, will run to process the values of `audience` and the constructed `service-account` via stdin.  This is intended to be used to render environment variables with an application such as `envsubst`. (default: '')
 
-### `service-account` (Optional, string)
-
-- The service account for which you want to acquire an access token. If not provided, the service account will be automatically constructed using the format: `<pipeline-slug>-<environment>-<ro|rw>@<gcp-project-id>.iam.gserviceaccount.com`, where `<pipeline-slug>` is derived from the `BUILDKITE_PIPELINE_SLUG` environment variable.
-
 ## Example
 
 Add the following to your `pipeline.yml`:
@@ -47,7 +43,7 @@ steps:
   - command: |
       echo "Credentials are located at \$GOOGLE_APPLICATION_CREDENTIALS"
     plugins:
-      - gcp-workload-identity-federation#v1.5.0:
+      - gcp-workload-identity-federation#v1:
           audience: "//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
           gcp-project-id: "my-gcp-project"
 ```
@@ -61,9 +57,9 @@ steps:
   - command: |
       echo "Credentials are located at \$GOOGLE_APPLICATION_CREDENTIALS"
     plugins:
-      - gcp-workload-identity-federation#v1.5.0:
+      - gcp-workload-identity-federation#v1:
           audience: "//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
-          service-account: "buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com"
+          gcp-project-id: "network-dev-c10a"
 ```
 
 ## Usage with docker (compose) plugins
@@ -82,7 +78,7 @@ steps:
   - command: |
       echo "Credentials are located at \$GOOGLE_APPLICATION_CREDENTIALS or \$CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE"
     plugins:
-      - gcp-workload-identity-federation#v1.5.0:
+      - gcp-workload-identity-federation#v1:
           audience: "//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
           gcp-project-id: "my-gcp-project"
       - docker#v5.9.0:
@@ -148,7 +144,7 @@ Where:
 - `<environment>` is inferred from the `gcp-project-id` by checking if it contains "dev", "sit", or "prod".
 - `<mode>` is automatically set to "ro" (read-only) for production environments on non-main branches, and "rw" (read-write) otherwise.
 
-By default, the plugin infers the environment and mode as described above. You can override both values by explicitly providing the `service-account` parameter in your plugin configuration.
+By default, the plugin infers the environment and mode as described above. 
 ```
 my-app-prod-ro@my-gcp-project.iam.gserviceaccount.com
 ```
