@@ -145,6 +145,10 @@ The plugin automatically constructs service account names using the following fo
 Where:
 - `<pipeline-slug>` is automatically extracted from the `BUILDKITE_PIPELINE_SLUG` environment variable
 - `<gcp-project-id>` is your GCP project ID
+- `<environment>` is inferred from the `gcp-project-id` by checking if it contains "dev", "sit", or "prod".
+- `<mode>` is automatically set to "ro" (read-only) for production environments on non-main branches, and "rw" (read-write) otherwise.
+
+By default, the plugin infers the environment and mode as described above. You can override both values by explicitly providing the `service-account` parameter in your plugin configuration.
 ```
 my-app-prod-ro@my-gcp-project.iam.gserviceaccount.com
 ```
