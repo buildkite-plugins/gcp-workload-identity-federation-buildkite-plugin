@@ -19,11 +19,6 @@ configuration:
       type: string
     lifetime:
       type: number
-    mode:
-      type: string
-      enum:
-        - ro
-        - rw
     render-command:
       type: string
     service-account:
@@ -31,5 +26,4 @@ configuration:
   required:
     - audience
     - gcp-project-id
-    - mode
   additionalProperties: false

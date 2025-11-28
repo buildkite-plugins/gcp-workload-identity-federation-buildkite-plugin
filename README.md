@@ -36,7 +36,7 @@ The path to the file is populated in `GOOGLE_APPLICATION_CREDENTIALS` for SDKs t
 
 ### `service-account` (Optional, string)
 
-- The service account for which you want to acquire an access token. If not provided, the service account will be automatically constructed using the format: `<pipeline-slug>-<environment>-<mode>@<gcp-project-id>.iam.gserviceaccount.com`, where `<pipeline-slug>` is derived from the `BUILDKITE_PIPELINE_SLUG` environment variable.
+- The service account for which you want to acquire an access token. If not provided, the service account will be automatically constructed using the format: `<pipeline-slug>-<environment>-<ro|rw>@<gcp-project-id>.iam.gserviceaccount.com`, where `<pipeline-slug>` is derived from the `BUILDKITE_PIPELINE_SLUG` environment variable.
 
 ## Example
 
@@ -139,7 +139,7 @@ You should already have a Google Cloud project and a Service Account to assume. 
 The plugin automatically constructs service account names using the following format:
 
 ```
-<pipeline-slug>-<environment>-<mode>@<gcp-project-id>.iam.gserviceaccount.com
+<pipeline-slug>-<environment>-<ro|rw>@<gcp-project-id>.iam.gserviceaccount.com
 ```
 
 Where:
