@@ -13,15 +13,30 @@ configuration:
       type: array
       items:
         type: string
+    environment:
+      type: string
+      enum:
+        - dev
+        - sit
+        - prod
+    gcp-project-id:
+      type: string
     hook:
       type: string
     lifetime:
       type: number
+    mode:
+      type: string
+      enum:
+        - ro
+        - rw
     render-command:
       type: string
     service-account:
       type: string
   required:
     - audience
-    - service-account
+    - environment
+    - gcp-project-id
+    - mode
   additionalProperties: false

@@ -12,6 +12,18 @@ The path to the file is populated in `GOOGLE_APPLICATION_CREDENTIALS` for SDKs t
 
 - The default audience as shown on the Workload Identity Federation Provider page, without the `https:` prefix, or a custom audience that you configure.
 
+### `gcp-project-id` (Required, string)
+
+- The GCP project ID where the service account exists. This is used to construct the service account email address.
+
+### `environment` (Required, string)
+
+- The environment identifier (Must be one of `dev`, `sit`, `prod`). This is used to construct the service account email address.
+
+### `mode` (Required, string)
+
+- The access mode for the service account. Must be either `ro` (read-only) or `rw` (read-write). This is used to construct the service account email address.
+
 ### `claims` (list(string))
 
 - A list of [claims to add to the requested buildkite oidc token](https://buildkite.com/docs/agent/v3/cli-oidc#claims-optional-claims). The agent currently supports requesting claims for `organization_id` and `pipeline_id`. If requested, these will include the respective buildkite organization and/or pipeline UUID claims in the token. (default: [])
@@ -28,15 +40,31 @@ The path to the file is populated in `GOOGLE_APPLICATION_CREDENTIALS` for SDKs t
 
 ### `render-command` (string)
 
-- An installed binary that when specified, will run twice to process the values of `audience` and `service-account` via stdin.  This is intended to be used to render environment variables with an application such as `envsubst`. (default: '')
+- An installed binary that when specified, will run to process the values of `audience` and the constructed `service-account` via stdin.  This is intended to be used to render environment variables with an application such as `envsubst`. (default: '')
 
-### `service-account` (Required, string)
+### `service-account` (Optional, string)
 
-- The service account for which you want to acquire an access token.
+- The service account for which you want to acquire an access token. If not provided, the service account will be automatically constructed using the format: `<pipeline-slug>-<environment>-<mode>@<gcp-project-id>.iam.gserviceaccount.com`, where `<pipeline-slug>` is derived from the `BUILDKITE_PIPELINE_SLUG` environment variable.
 
 ## Example
 
 Add the following to your `pipeline.yml`:
+
+```yml
+steps:
+  - command: |
+      echo "Credentials are located at \$GOOGLE_APPLICATION_CREDENTIALS"
+    plugins:
+      - gcp-workload-identity-federation#v1.5.0:
+          audience: "//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
+          gcp-project-id: "my-gcp-project"
+          environment: "prod"
+          mode: "ro"
+```
+
+The plugin will automatically construct the service account as: `<pipeline-slug>-prod-ro@my-gcp-project.iam.gserviceaccount.com`
+
+### Example with explicit service account (backwards compatibility)
 
 ```yml
 steps:
@@ -66,7 +94,9 @@ steps:
     plugins:
       - gcp-workload-identity-federation#v1.5.0:
           audience: "//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
-          service-account: "buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com"
+          gcp-project-id: "my-gcp-project"
+          environment: "prod"
+          mode: "rw"
       - docker#v5.9.0:
           image: <IMAGE>
           expand-volume-vars: true
@@ -114,20 +144,25 @@ You should already have a Google Cloud project and a Service Account to assume. 
 
 4. Grant access to the service account.
 
-5. Configure this plugin using the workload provider audience without the leading `https:`, and the service account email address.
+5. Configure this plugin using the workload provider audience without the leading `https:`, along with your GCP project ID, environment, and access mode. The plugin will automatically construct the service account email address.
 
-## Example
+## Service Account Naming Convention
 
-Add the following to your `pipeline.yml`:
+The plugin automatically constructs service account names using the following format:
 
-```yml
-steps:
-  - command: |
-      echo "Credentials are located at \$GOOGLE_APPLICATION_CREDENTIALS"
-    plugins:
-      - gcp-workload-identity-federation#v1.5.0:
-          audience: "//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
-          service-account: "buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com"
+```
+<pipeline-slug>-<environment>-<mode>@<gcp-project-id>.iam.gserviceaccount.com
+```
+
+Where:
+- `<pipeline-slug>` is automatically extracted from the `BUILDKITE_PIPELINE_SLUG` environment variable
+- `<environment>` is the value you provide (e.g., `dev`, `staging`, `prod`)
+- `<mode>` is either `ro` (read-only) or `rw` (read-write)
+- `<gcp-project-id>` is your GCP project ID
+
+For example, if your pipeline slug is `my-app`, environment is `prod`, mode is `ro`, and project ID is `my-gcp-project`, the service account will be:
+```
+my-app-prod-ro@my-gcp-project.iam.gserviceaccount.com
 ```
 
 ## Developing

@@ -14,9 +14,35 @@ if [[ -z "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE:-}" ]]; t
   exit 1
 fi
 
-if [[ -z "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_SERVICE_ACCOUNT:-}" ]]; then
-  echo "🚨 Missing 'service-account' plugin configuration"
-  exit 1
+# Determine service account - construct from parameters
+if [[ -n "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_SERVICE_ACCOUNT:-}" ]]; then
+  # Use explicitly provided service account (backwards compatibility)
+  SERVICE_ACCOUNT="${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_SERVICE_ACCOUNT}"
+else
+  # Construct service account from parameters
+  if [[ -z "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_GCP_PROJECT_ID:-}" ]]; then
+    echo "🚨 Missing 'gcp-project-id' plugin configuration"
+    exit 1
+  fi
+
+  if [[ -z "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_ENVIRONMENT:-}" ]]; then
+    echo "🚨 Missing 'environment' plugin configuration"
+    exit 1
+  fi
+
+  if [[ -z "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_MODE:-}" ]]; then
+    echo "🚨 Missing 'mode' plugin configuration (must be 'ro' or 'rw')"
+    exit 1
+  fi
+
+  if [[ -z "${BUILDKITE_PIPELINE_SLUG:-}" ]]; then
+    echo "🚨 BUILDKITE_PIPELINE_SLUG environment variable is not set"
+    exit 1
+  fi
+
+  # Construct service account: <buildkite_slug>-<env>-<ro|rw>@<gcp_project_id>.iam.gserviceaccount.com
+  SERVICE_ACCOUNT="${BUILDKITE_PIPELINE_SLUG}-${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_ENVIRONMENT}-${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_MODE}@${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_GCP_PROJECT_ID}.iam.gserviceaccount.com"
+  echo "📧 Constructed service account: ${SERVICE_ACCOUNT}"
 fi
 
 if [[ -n "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_RENDER_COMMAND:-}" ]]; then
@@ -26,7 +52,7 @@ if [[ -n "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_RENDER_COMMAND:-}"
     exit 1
   }
   BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE="$(echo "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE}" | ${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_RENDER_COMMAND})"
-  BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_SERVICE_ACCOUNT="$(echo "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_SERVICE_ACCOUNT}" | ${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_RENDER_COMMAND})"
+  SERVICE_ACCOUNT="$(echo "${SERVICE_ACCOUNT}" | ${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_RENDER_COMMAND})"
 fi
 
 # add required arguments
@@ -53,7 +79,7 @@ cat << JSON > "$TMPDIR"/credentials.json
   "audience": "$BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE",
   "subject_token_type": "urn:ietf:params:oauth:token-type:jwt",
   "token_url": "https://sts.googleapis.com/v1/token",
-  "service_account_impersonation_url": "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/$BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_SERVICE_ACCOUNT:generateAccessToken",
+  "service_account_impersonation_url": "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/$SERVICE_ACCOUNT:generateAccessToken",
   "credential_source": {
     "file": "$TMPDIR/token.json"
   }
