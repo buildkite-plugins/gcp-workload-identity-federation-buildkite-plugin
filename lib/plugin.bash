@@ -23,22 +23,6 @@ else
   if [[ -z "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_GCP_PROJECT_ID:-}" ]]; then
     echo "🚨 Missing 'gcp-project-id' plugin configuration"
     exit 1
-  else
-    case "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_GCP_PROJECT_ID}" in
-      *dev*) BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_ENVIRONMENT="dev" ;;
-      *sit*) BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_ENVIRONMENT="sit" ;;
-      *prod*) BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_ENVIRONMENT="prod" ;;
-      *)
-        echo "🚨 Could not infer environment from 'gcp-project-id' plugin configuration. Please ensure it contains one of 'dev', 'sit', or 'prod'."
-        exit 1
-        ;;
-    esac
-  fi
-
-  if [[ "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_ENVIRONMENT}" == "prod" && "${BUILDKITE_BRANCH}" != "main" ]]; then
-    BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_MODE="ro"
-  else
-    BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_MODE="rw"
   fi
 
   if [[ -z "${BUILDKITE_PIPELINE_SLUG:-}" ]]; then
@@ -46,8 +30,12 @@ else
     exit 1
   fi
 
-  # Construct service account: <buildkite_slug>-<env>-<ro|rw>@<gcp_project_id>.iam.gserviceaccount.com
-  SERVICE_ACCOUNT="${BUILDKITE_PIPELINE_SLUG}-${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_ENVIRONMENT}-${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_MODE}@${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_GCP_PROJECT_ID}.iam.gserviceaccount.com"
+  # Construct service account: <hashed_buildkite_slug>-<ro|rw>@<gcp_project_id>.iam.gserviceaccount.com
+  # create a shortened, valid identifier from the Buildkite pipeline slug for use in Google Cloud service account names
+  HASHED_BUILDKITE_PIPELINE_SLUG=$(echo -n "$BUILDKITE_PIPELINE_SLUG" | sha256sum | cut -c1-18)
+  MODIFIED_HASHED_BUILDKITE_PIPELINE_SLUG="a${HASHED_BUILDKITE_PIPELINE_SLUG}a"
+
+  SERVICE_ACCOUNT="${MODIFIED_HASHED_BUILDKITE_PIPELINE_SLUG}-${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_MODE}@${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_GCP_PROJECT_ID}.iam.gserviceaccount.com"
   echo "📧 Constructed service account: ${SERVICE_ACCOUNT}"
 fi
 

@@ -15,6 +15,11 @@ configuration:
         type: string
     gcp-project-id:
       type: string
+    mode:
+      type: string
+      enum:
+        - 'ro'
+        - 'rw'
     hook:
       type: string
     lifetime:
@@ -26,4 +31,5 @@ configuration:
   required:
     - audience
     - gcp-project-id
+    - mode
   additionalProperties: false

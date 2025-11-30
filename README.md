@@ -16,6 +16,10 @@ The path to the file is populated in `GOOGLE_APPLICATION_CREDENTIALS` for SDKs t
 
 - The GCP project ID where the service account exists. This is used to construct the service account email address.
 
+### `mode` (Required, string)
+
+- The access mode for the service account. Must be either `ro` (read-only) or `rw` (read-write).
+
 ### `claims` (list(string))
 
 - A list of [claims to add to the requested buildkite oidc token](https://buildkite.com/docs/agent/v3/cli-oidc#claims-optional-claims). The agent currently supports requesting claims for `organization_id` and `pipeline_id`. If requested, these will include the respective buildkite organization and/or pipeline UUID claims in the token. (default: [])
@@ -46,9 +50,10 @@ steps:
       - gcp-workload-identity-federation#v1:
           audience: "//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
           gcp-project-id: "my-gcp-project"
+          mode: "ro"
 ```
 
-The plugin will automatically construct the service account as: `<pipeline-slug>-prod-ro@my-gcp-project.iam.gserviceaccount.com`
+The plugin will automatically construct the service account as: `<hashed-pipeline-slug>-ro@my-gcp-project.iam.gserviceaccount.com`
 
 ### Example with explicit service account (backwards compatibility)
 
@@ -60,6 +65,7 @@ steps:
       - gcp-workload-identity-federation#v1:
           audience: "//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
           gcp-project-id: "network-dev-c10a"
+          mode: "rw"
 ```
 
 ## Usage with docker (compose) plugins
@@ -81,6 +87,7 @@ steps:
       - gcp-workload-identity-federation#v1:
           audience: "//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
           gcp-project-id: "my-gcp-project"
+          mode: "ro"
       - docker#v5.9.0:
           image: <IMAGE>
           expand-volume-vars: true
@@ -128,25 +135,24 @@ You should already have a Google Cloud project and a Service Account to assume. 
 
 4. Grant access to the service account.
 
-5. Configure this plugin using the workload provider audience without the leading `https:`, along with your GCP project ID, environment, and access mode. The plugin will automatically construct the service account email address.
+5. Configure this plugin using the workload provider audience without the leading `https:`, along with your GCP project ID and access mode. The plugin will automatically construct the service account email address.
 
 ## Service Account Naming Convention
 
 The plugin automatically constructs service account names using the following format:
 
 ```
-<pipeline-slug>-<environment>-<ro|rw>@<gcp-project-id>.iam.gserviceaccount.com
+<hashed-pipeline-slug>-<mode>@<gcp-project-id>.iam.gserviceaccount.com
 ```
 
 Where:
-- `<pipeline-slug>` is automatically extracted from the `BUILDKITE_PIPELINE_SLUG` environment variable
+- `<hashed-pipeline-slug>` is a SHA256 hash (first 18 characters) of the `BUILDKITE_PIPELINE_SLUG` environment variable, prefixed and suffixed with "a" to ensure valid GCP naming
+- `<mode>` is the access mode you specify ("ro" for read-only or "rw" for read-write)
 - `<gcp-project-id>` is your GCP project ID
-- `<environment>` is inferred from the `gcp-project-id` by checking if it contains "dev", "sit", or "prod".
-- `<mode>` is automatically set to "ro" (read-only) for production environments on non-main branches, and "rw" (read-write) otherwise.
 
-By default, the plugin infers the environment and mode as described above. 
+Example:
 ```
-my-app-prod-ro@my-gcp-project.iam.gserviceaccount.com
+aa1b2c3d4e5f6789012a-ro@my-gcp-project.iam.gserviceaccount.com
 ```
 
 ## Developing
