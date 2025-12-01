@@ -10,12 +10,13 @@ DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)"
 args=()
 
 if [[ -z "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE:-}" ]]; then
-  if [[ -z "${GCP_WORKLOAD_IDENTITY_BUILDKITE_AUDIENCE:-}" ]]; then
-    echo "🚨 Missing 'audience' plugin configuration and GCP_WORKLOAD_IDENTITY_BUILDKITE_AUDIENCE secret not set"
+  echo "📡 Retrieving audience from GCP_WORKLOAD_IDENTITY_BUILDKITE_AUDIENCE secret"
+  if BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE=$(buildkite-agent secret get GCP_WORKLOAD_IDENTITY_BUILDKITE_AUDIENCE 2>/dev/null); then
+    echo "✅ Successfully retrieved audience from secret"
+  else
+    echo "🚨 Missing 'audience' plugin configuration and failed to retrieve GCP_WORKLOAD_IDENTITY_BUILDKITE_AUDIENCE secret"
     exit 1
   fi
-  BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE="${GCP_WORKLOAD_IDENTITY_BUILDKITE_AUDIENCE}"
-  echo "📡 Using audience from GCP_WORKLOAD_IDENTITY_BUILDKITE_AUDIENCE secret"
 fi
 
 # Determine service account - construct from parameters
