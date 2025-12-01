@@ -8,9 +8,10 @@ The path to the file is populated in `GOOGLE_APPLICATION_CREDENTIALS` for SDKs t
 
 ## Configuration
 
-### `audience` (Required, string)
+### `audience` (Optional, string)
 
 - The default audience as shown on the Workload Identity Federation Provider page, without the `https:` prefix, or a custom audience that you configure.
+- If not provided, the plugin will use the `GCP_WORKLOAD_IDENTITY_BUILDKITE_AUDIENCE` Buildkite secret. You must specify the secret at the pipeline or step level using the `secrets:` block.
 
 ### `gcp-project-id` (Required, string)
 
@@ -54,6 +55,20 @@ steps:
 ```
 
 The plugin will automatically construct the service account as: `<hashed-pipeline-slug>-ro@my-gcp-project.iam.gserviceaccount.com`
+
+### Example using Buildkite secret for audience
+
+```yml
+steps:
+  - command: |
+      echo "Credentials are located at \$GOOGLE_APPLICATION_CREDENTIALS"
+    secrets:
+      - GCP_WORKLOAD_IDENTITY_BUILDKITE_AUDIENCE
+    plugins:
+      - gcp-workload-identity-federation#v1:
+          gcp-project-id: "my-gcp-project"
+          mode: "ro"
+```
 
 ### Example with explicit service account (backwards compatibility)
 
