@@ -48,10 +48,9 @@ steps:
   - command: |
       echo "Credentials are located at \$GOOGLE_APPLICATION_CREDENTIALS"
     plugins:
-      - gcp-workload-identity-federation#v1:
+      - gcp-workload-identity-federation#v1.5.0:
           audience: "//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
           gcp-project-id: "my-gcp-project"
-          mode: "ro"
 ```
 
 The plugin will automatically construct the service account as: `<hashed-pipeline-slug>-ro@my-gcp-project.iam.gserviceaccount.com`
@@ -65,9 +64,8 @@ steps:
     secrets:
       - GCP_WORKLOAD_IDENTITY_BUILDKITE_AUDIENCE
     plugins:
-      - gcp-workload-identity-federation#v1:
+      - gcp-workload-identity-federation#v1.5.0:
           gcp-project-id: "my-gcp-project"
-          mode: "ro"
 ```
 
 ### Example with explicit service account (backwards compatibility)
@@ -77,10 +75,9 @@ steps:
   - command: |
       echo "Credentials are located at \$GOOGLE_APPLICATION_CREDENTIALS"
     plugins:
-      - gcp-workload-identity-federation#v1:
+      - gcp-workload-identity-federation#v1.5.0:
           audience: "//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
           gcp-project-id: "network-dev-c10a"
-          mode: "rw"
 ```
 
 ## Usage with docker (compose) plugins
@@ -99,10 +96,9 @@ steps:
   - command: |
       echo "Credentials are located at \$GOOGLE_APPLICATION_CREDENTIALS or \$CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE"
     plugins:
-      - gcp-workload-identity-federation#v1:
+      - gcp-workload-identity-federation#v1.5.0:
           audience: "//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
           gcp-project-id: "my-gcp-project"
-          mode: "ro"
       - docker#v5.9.0:
           image: <IMAGE>
           expand-volume-vars: true
