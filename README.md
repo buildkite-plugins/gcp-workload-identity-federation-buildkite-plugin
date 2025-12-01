@@ -8,9 +8,18 @@ The path to the file is populated in `GOOGLE_APPLICATION_CREDENTIALS` for SDKs t
 
 ## Configuration
 
-### `audience` (Required, string)
+### `audience` (Optional, string)
 
 - The default audience as shown on the Workload Identity Federation Provider page, without the `https:` prefix, or a custom audience that you configure.
+- If not provided, the plugin will use the `GCP_WORKLOAD_IDENTITY_BUILDKITE_AUDIENCE` Buildkite secret. You must specify the secret at the pipeline or step level using the `secrets:` block.
+
+### `gcp-project-id` (Required, string)
+
+- The GCP project ID where the service account exists. This is used to construct the service account email address.
+
+### `mode` (Optional, string)
+
+- The access mode for the service account. Must be either `ro` (read-only) or `rw` (read-write). (default: `rw`)
 
 ### `claims` (list(string))
 
@@ -18,9 +27,9 @@ The path to the file is populated in `GOOGLE_APPLICATION_CREDENTIALS` for SDKs t
 
 ### `hook` (string)
 
-- Which [lifecycle hook phase](https://buildkite.com/docs/agent/v3/hooks#job-lifecycle-hooks) to run the plugin during. This can be either `environment` (default) or `pre-command`.
+- Which [lifecycle hook phase](https://buildkite.com/docs/agent/v3/hooks#job-lifecycle-hooks) to run the plugin during. This can be either `pre-command` (default) or `environment`.
 
-- This is useful when running this plugin with the [artifacts](https://github.com/buildkite-plugins/artifacts-buildkite-plugin) plugin. When using both plugins it may be useful to run this plugin after the artifacts plugin. Running this plugin after allows using the runner's pre-configured credentials to fetch artifacts before switching to credentials used during the command step. When running the plugin in the `pre-command` hook, you may need to ensure it is ordered after the artifact plugin.
+- The default is `pre-command` to ensure Buildkite secrets are available when using the `GCP_WORKLOAD_IDENTITY_BUILDKITE_AUDIENCE` secret. Use `environment` if you need credentials available earlier in the job lifecycle and are providing the audience directly in the plugin configuration.
 
 ### `lifetime` (number)
 
@@ -28,11 +37,7 @@ The path to the file is populated in `GOOGLE_APPLICATION_CREDENTIALS` for SDKs t
 
 ### `render-command` (string)
 
-- An installed binary that when specified, will run twice to process the values of `audience` and `service-account` via stdin.  This is intended to be used to render environment variables with an application such as `envsubst`. (default: '')
-
-### `service-account` (Required, string)
-
-- The service account for which you want to acquire an access token.
+- An installed binary that when specified, will run to process the values of `audience` and the constructed `service-account` via stdin.  This is intended to be used to render environment variables with an application such as `envsubst`. (default: '')
 
 ## Example
 
@@ -45,7 +50,34 @@ steps:
     plugins:
       - gcp-workload-identity-federation#v1.5.0:
           audience: "//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
-          service-account: "buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com"
+          gcp-project-id: "my-gcp-project"
+```
+
+The plugin will automatically construct the service account as: `<hashed-pipeline-slug>-ro@my-gcp-project.iam.gserviceaccount.com`
+
+### Example using Buildkite secret for audience
+
+```yml
+steps:
+  - command: |
+      echo "Credentials are located at \$GOOGLE_APPLICATION_CREDENTIALS"
+    secrets:
+      - GCP_WORKLOAD_IDENTITY_BUILDKITE_AUDIENCE
+    plugins:
+      - gcp-workload-identity-federation#v1.5.0:
+          gcp-project-id: "my-gcp-project"
+```
+
+### Example with explicit service account (backwards compatibility)
+
+```yml
+steps:
+  - command: |
+      echo "Credentials are located at \$GOOGLE_APPLICATION_CREDENTIALS"
+    plugins:
+      - gcp-workload-identity-federation#v1.5.0:
+          audience: "//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
+          gcp-project-id: "network-dev-c10a"
 ```
 
 ## Usage with docker (compose) plugins
@@ -66,7 +98,7 @@ steps:
     plugins:
       - gcp-workload-identity-federation#v1.5.0:
           audience: "//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
-          service-account: "buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com"
+          gcp-project-id: "my-gcp-project"
       - docker#v5.9.0:
           image: <IMAGE>
           expand-volume-vars: true
@@ -114,20 +146,24 @@ You should already have a Google Cloud project and a Service Account to assume. 
 
 4. Grant access to the service account.
 
-5. Configure this plugin using the workload provider audience without the leading `https:`, and the service account email address.
+5. Configure this plugin using the workload provider audience without the leading `https:`, along with your GCP project ID and access mode. The plugin will automatically construct the service account email address.
 
-## Example
+## Service Account Naming Convention
 
-Add the following to your `pipeline.yml`:
+The plugin automatically constructs service account names using the following format:
 
-```yml
-steps:
-  - command: |
-      echo "Credentials are located at \$GOOGLE_APPLICATION_CREDENTIALS"
-    plugins:
-      - gcp-workload-identity-federation#v1.5.0:
-          audience: "//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
-          service-account: "buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com"
+```
+<hashed-pipeline-slug>-<mode>@<gcp-project-id>.iam.gserviceaccount.com
+```
+
+Where:
+- `<hashed-pipeline-slug>` is a SHA256 hash (first 18 characters) of the `BUILDKITE_PIPELINE_SLUG` environment variable, prefixed and suffixed with "a" to ensure valid GCP naming
+- `<mode>` is the access mode you specify ("ro" for read-only or "rw" for read-write)
+- `<gcp-project-id>` is your GCP project ID
+
+Example:
+```
+aa1b2c3d4e5f6789012a-ro@my-gcp-project.iam.gserviceaccount.com
 ```
 
 ## Developing

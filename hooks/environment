@@ -2,8 +2,8 @@
 
 set -euo pipefail
 
-# run plugin in the environment hook by default
-if [[ "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_HOOK:-environment}" == "environment" ]]; then
+# run plugin in the environment hook only if explicitly set
+if [[ "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_HOOK:-pre-command}" == "environment" ]]; then
   echo "Running in the environment hook"
 else
   echo "Skipping environment hook"
