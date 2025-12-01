@@ -2,8 +2,8 @@
 
 set -euo pipefail
 
-# run plugin in the pre-command hook if specified
-if [[ "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_HOOK:-}" == "pre-command" ]]; then
+# run plugin in the pre-command hook by default
+if [[ "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_HOOK:-pre-command}" == "pre-command" ]]; then
   echo "Running in the pre-command hook"
 else
   echo "Skipping pre-command hook"

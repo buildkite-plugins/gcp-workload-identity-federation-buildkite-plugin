@@ -27,9 +27,9 @@ The path to the file is populated in `GOOGLE_APPLICATION_CREDENTIALS` for SDKs t
 
 ### `hook` (string)
 
-- Which [lifecycle hook phase](https://buildkite.com/docs/agent/v3/hooks#job-lifecycle-hooks) to run the plugin during. This can be either `environment` (default) or `pre-command`.
+- Which [lifecycle hook phase](https://buildkite.com/docs/agent/v3/hooks#job-lifecycle-hooks) to run the plugin during. This can be either `pre-command` (default) or `environment`.
 
-- This is useful when running this plugin with the [artifacts](https://github.com/buildkite-plugins/artifacts-buildkite-plugin) plugin. When using both plugins it may be useful to run this plugin after the artifacts plugin. Running this plugin after allows using the runner's pre-configured credentials to fetch artifacts before switching to credentials used during the command step. When running the plugin in the `pre-command` hook, you may need to ensure it is ordered after the artifact plugin.
+- The default is `pre-command` to ensure Buildkite secrets are available when using the `GCP_WORKLOAD_IDENTITY_BUILDKITE_AUDIENCE` secret. Use `environment` if you need credentials available earlier in the job lifecycle and are providing the audience directly in the plugin configuration.
 
 ### `lifetime` (number)
 
