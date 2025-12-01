@@ -10,8 +10,12 @@ DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)"
 args=()
 
 if [[ -z "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE:-}" ]]; then
-  echo "🚨 Missing 'audience' plugin configuration"
-  exit 1
+  if [[ -z "${GCP_WORKLOAD_IDENTITY_BUILDKITE_AUDIENCE:-}" ]]; then
+    echo "🚨 Missing 'audience' plugin configuration and GCP_WORKLOAD_IDENTITY_BUILDKITE_AUDIENCE secret not set"
+    exit 1
+  fi
+  BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE="${GCP_WORKLOAD_IDENTITY_BUILDKITE_AUDIENCE}"
+  echo "📡 Using audience from GCP_WORKLOAD_IDENTITY_BUILDKITE_AUDIENCE secret"
 fi
 
 # Determine service account - construct from parameters

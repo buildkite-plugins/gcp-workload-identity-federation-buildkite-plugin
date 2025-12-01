@@ -29,7 +29,6 @@ configuration:
     service-account:
       type: string
   required:
-    - audience
     - gcp-project-id
     - mode
   additionalProperties: false
