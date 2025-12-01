@@ -20,6 +20,7 @@ configuration:
       enum:
         - 'ro'
         - 'rw'
+      default: 'rw'
     hook:
       type: string
     lifetime:
