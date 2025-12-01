@@ -31,5 +31,4 @@ configuration:
       type: string
   required:
     - gcp-project-id
-    - mode
   additionalProperties: false

@@ -35,17 +35,15 @@ else
     exit 1
   fi
 
-  if [[ -z "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_MODE:-}" ]]; then
-    echo "🚨 Missing 'mode' plugin configuration"
-    exit 1
-  fi
+  # Default mode to 'rw' if not provided
+  MODE="${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_MODE:-rw}"
 
   # Construct service account: <hashed_buildkite_slug>-<ro|rw>@<gcp_project_id>.iam.gserviceaccount.com
   # create a shortened, valid identifier from the Buildkite pipeline slug for use in Google Cloud service account names
   HASHED_BUILDKITE_PIPELINE_SLUG=$(echo -n "$BUILDKITE_PIPELINE_SLUG" | sha256sum | cut -c1-18)
   MODIFIED_HASHED_BUILDKITE_PIPELINE_SLUG="a${HASHED_BUILDKITE_PIPELINE_SLUG}a"
 
-  SERVICE_ACCOUNT="${MODIFIED_HASHED_BUILDKITE_PIPELINE_SLUG}-${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_MODE}@${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_GCP_PROJECT_ID}.iam.gserviceaccount.com"
+  SERVICE_ACCOUNT="${MODIFIED_HASHED_BUILDKITE_PIPELINE_SLUG}-${MODE}@${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_GCP_PROJECT_ID}.iam.gserviceaccount.com"
   echo "📧 Constructed service account: ${SERVICE_ACCOUNT}"
 fi
 

@@ -17,9 +17,9 @@ The path to the file is populated in `GOOGLE_APPLICATION_CREDENTIALS` for SDKs t
 
 - The GCP project ID where the service account exists. This is used to construct the service account email address.
 
-### `mode` (Required, string)
+### `mode` (Optional, string)
 
-- The access mode for the service account. Must be either `ro` (read-only) or `rw` (read-write).
+- The access mode for the service account. Must be either `ro` (read-only) or `rw` (read-write). (default: `rw`)
 
 ### `claims` (list(string))
 
