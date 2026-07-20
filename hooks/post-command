@@ -3,7 +3,7 @@
 set -euo pipefail
 
 # run cleanup in post-command hook if we were run in pre-command
-if [[ "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_HOOK:-}" == "pre-command" ]]; then
+if [[ "${BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_HOOK:-pre-command}" == "pre-command" ]]; then
   echo "Running in the post-command hook"
 else
   echo "Skipping post-command hook"

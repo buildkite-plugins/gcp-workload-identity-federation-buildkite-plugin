@@ -18,7 +18,9 @@ The path to the file is populated in `GOOGLE_APPLICATION_CREDENTIALS` for SDKs t
 
 ### `hook` (string)
 
-- Which [lifecycle hook phase](https://buildkite.com/docs/agent/v3/hooks#job-lifecycle-hooks) to run the plugin during. This can be either `environment` (default) or `pre-command`.
+- Which [lifecycle hook phase](https://buildkite.com/docs/agent/v3/hooks#job-lifecycle-hooks) to run the plugin during. This can be either `pre-command` (default) or `environment`.
+
+> **Migrating from v1.5.0:** If you relied on WIF credentials being available before the checkout step (i.e. you were using the previous `environment` default), add `hook: environment` explicitly to your plugin configuration to retain that behaviour.
 
 - This is useful when running this plugin with the [artifacts](https://github.com/buildkite-plugins/artifacts-buildkite-plugin) plugin. When using both plugins it may be useful to run this plugin after the artifacts plugin. Running this plugin after allows using the runner's pre-configured credentials to fetch artifacts before switching to credentials used during the command step. When running the plugin in the `pre-command` hook, you may need to ensure it is ordered after the artifact plugin.
 

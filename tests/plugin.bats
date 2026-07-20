@@ -9,6 +9,7 @@ setup() {
 }
 
 @test "fails when mktemp fails" {
+    export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_HOOK="environment"
     export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE="//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
     export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_SERVICE_ACCOUNT="buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com"
 
@@ -21,6 +22,7 @@ setup() {
 }
 
 @test "fails when audience is missing" {
+    export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_HOOK="environment"
     export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_SERVICE_ACCOUNT="buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com"
 
     run "$PWD/hooks/environment"
@@ -29,6 +31,7 @@ setup() {
 }
 
 @test "fails when service account is missing" {
+    export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_HOOK="environment"
     export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE="//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
 
     run "$PWD/hooks/environment"
@@ -37,6 +40,7 @@ setup() {
 }
 
 @test "fails when render command has non-existent binary" {
+    export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_HOOK="environment"
     export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE="//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
     export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_SERVICE_ACCOUNT="buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com"
     export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_RENDER_COMMAND="this-file-purposely-does-not-exist"
@@ -47,6 +51,7 @@ setup() {
 }
 
 @test "succeeds when mktemp fails once" {
+    export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_HOOK="environment"
     export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE="//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
     export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_SERVICE_ACCOUNT="buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com"
 
@@ -62,7 +67,8 @@ setup() {
     unstub buildkite-agent
 }
 
-@test "exports credentials" {
+@test "exports credentials via environment hook" {
+    export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_HOOK="environment"
     export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE="//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
     export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_SERVICE_ACCOUNT="buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com"
 
@@ -94,7 +100,40 @@ JSON)
     unstub buildkite-agent
 }
 
+@test "exports credentials via pre-command hook (default)" {
+    export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE="//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
+    export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_SERVICE_ACCOUNT="buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com"
+
+    stub mktemp "-d : echo $BATS_TEST_TMPDIR"
+    stub buildkite-agent "oidc request-token --audience //iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite --lifetime 0 : echo dummy-jwt"
+
+    run "$PWD/hooks/pre-command"
+
+    assert_success
+
+    assert_output --partial "Requesting OIDC token from Buildkite"
+    assert_output --partial "Configuring Google Cloud credentials"
+
+    diff $BATS_TEST_TMPDIR/token.json <(echo dummy-jwt)
+    diff $BATS_TEST_TMPDIR/credentials.json <(cat << JSON
+{
+  "type": "external_account",
+  "audience": "//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite",
+  "subject_token_type": "urn:ietf:params:oauth:token-type:jwt",
+  "token_url": "https://sts.googleapis.com/v1/token",
+  "service_account_impersonation_url": "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com:generateAccessToken",
+  "credential_source": {
+    "file": "$BATS_TEST_TMPDIR/token.json"
+  }
+}
+JSON)
+
+    unstub mktemp
+    unstub buildkite-agent
+}
+
 @test "exports credentials with render command using envsubst" {
+    export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_HOOK="environment"
     export GCP_PROJECT_ID=oidc-project
     export GCP_PROJECT_NUMBER=123456789
     export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE="//iam.googleapis.com/projects/\${GCP_PROJECT_NUMBER}/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
@@ -130,6 +169,7 @@ JSON)
 }
 
 @test "exports credentials with optional claim organization id" {
+    export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_HOOK="environment"
     export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE="//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
     export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_SERVICE_ACCOUNT="buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com"
     export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_CLAIMS_0="organization_id"
@@ -163,6 +203,7 @@ JSON)
 }
 
 @test "exports credentials with optional claim pipeline id" {
+    export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_HOOK="environment"
     export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE="//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
     export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_SERVICE_ACCOUNT="buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com"
     export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_CLAIMS_0="pipeline_id"
@@ -196,6 +237,7 @@ JSON)
 }
 
 @test "exports credentials with optional claims organization_id and pipeline id" {
+    export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_HOOK="environment"
     export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE="//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
     export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_SERVICE_ACCOUNT="buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com"
     export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_CLAIMS_0="organization_id"
