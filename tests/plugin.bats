@@ -94,6 +94,60 @@ JSON)
     unstub buildkite-agent
 }
 
+@test "exports Windows credential paths and preserves the Bash cleanup path" {
+    export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE="//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
+    export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_SERVICE_ACCOUNT="buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com"
+    local tmpdir="$BATS_TEST_TMPDIR/wif credentials"
+
+    for ostype in msys cygwin; do
+        mkdir "$tmpdir"
+        stub mktemp "-d : printf '%s\n' '$tmpdir'"
+        stub cygpath "-m '$tmpdir' : printf '%s\n' 'C:/tools/msys64/tmp/wif credentials'"
+        stub buildkite-agent "oidc request-token --audience //iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite --lifetime 0 : echo dummy-jwt"
+
+        run bash -c '
+            OSTYPE=$1
+            source "$2"
+            printf "GOOGLE_APPLICATION_CREDENTIALS=%s\n" "$GOOGLE_APPLICATION_CREDENTIALS"
+            printf "CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE=%s\n" "$CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE"
+            printf "BUILDKITE_OIDC_TMPDIR=%s\n" "$BUILDKITE_OIDC_TMPDIR"
+        ' -- "$ostype" "$PWD/hooks/environment"
+
+        assert_success
+        assert_output --partial "GOOGLE_APPLICATION_CREDENTIALS=C:/tools/msys64/tmp/wif credentials/credentials.json"
+        assert_output --partial "CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE=C:/tools/msys64/tmp/wif credentials/credentials.json"
+        assert_output --partial "BUILDKITE_OIDC_TMPDIR=$tmpdir"
+        grep -Fq '"file": "C:/tools/msys64/tmp/wif credentials/token.json"' "$tmpdir/credentials.json"
+        diff "$tmpdir/token.json" <(printf '%s\n' dummy-jwt)
+
+        unstub mktemp
+        unstub cygpath
+        unstub buildkite-agent
+
+        export BUILDKITE_OIDC_TMPDIR="$tmpdir"
+        run "$PWD/hooks/pre-exit"
+
+        assert_success
+        [ ! -d "$tmpdir" ]
+    done
+}
+
+@test "fails when Windows path conversion fails" {
+    export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_AUDIENCE="//iam.googleapis.com/projects/123456789/locations/global/workloadIdentityPools/buildkite-example-pipeline/providers/buildkite"
+    export BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_SERVICE_ACCOUNT="buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com"
+
+    stub mktemp "-d : echo $BATS_TEST_TMPDIR"
+    stub cygpath "-m $BATS_TEST_TMPDIR : printf '%s\n' 'path conversion failed' >&2; exit 1"
+
+    run bash -c 'OSTYPE=msys; source "$1"' -- "$PWD/hooks/environment"
+
+    assert_failure
+    assert_output --partial "path conversion failed"
+
+    unstub mktemp
+    unstub cygpath
+}
+
 @test "exports credentials with render command using envsubst" {
     export GCP_PROJECT_ID=oidc-project
     export GCP_PROJECT_NUMBER=123456789

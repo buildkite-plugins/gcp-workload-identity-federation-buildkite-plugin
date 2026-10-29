@@ -41,6 +41,14 @@ done <<< "$(plugin_read_list CLAIMS)"
 # Create a temporary directory with both BSD and GNU mktemp
 TMPDIR=$(mktemp -d 2>/dev/null || mktemp -d -t 'buildkiteXXXX')
 
+credentials_dir="$TMPDIR"
+case "$OSTYPE" in
+  msys*|cygwin*)
+    # Native tools do not translate POSIX paths inside JSON.
+    credentials_dir="$(cygpath -m "$TMPDIR")"
+    ;;
+esac
+
 echo "~~~ :buildkite: Requesting OIDC token from Buildkite"
 
 buildkite-agent oidc request-token "${args[@]}" > "$TMPDIR"/token.json
@@ -55,11 +63,11 @@ cat << JSON > "$TMPDIR"/credentials.json
   "token_url": "https://sts.googleapis.com/v1/token",
   "service_account_impersonation_url": "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/$BUILDKITE_PLUGIN_GCP_WORKLOAD_IDENTITY_FEDERATION_SERVICE_ACCOUNT:generateAccessToken",
   "credential_source": {
-    "file": "$TMPDIR/token.json"
+    "file": "$credentials_dir/token.json"
   }
 }
 JSON
 
 export BUILDKITE_OIDC_TMPDIR=$TMPDIR
-export GOOGLE_APPLICATION_CREDENTIALS=$TMPDIR/credentials.json
+export GOOGLE_APPLICATION_CREDENTIALS="$credentials_dir/credentials.json"
 export CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE=$GOOGLE_APPLICATION_CREDENTIALS

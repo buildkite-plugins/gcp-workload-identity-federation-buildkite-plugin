@@ -48,6 +48,13 @@ steps:
           service-account: "buildkite-example-pipeline@oidc-project.iam.gserviceaccount.com"
 ```
 
+## Windows
+
+On Windows, run the plugin with Bash from MSYS2, Git Bash, or Cygwin.
+These shells must provide `cygpath`.
+The plugin converts paths in the credentials file and Google credential environment variables to Windows paths with forward slashes.
+Bash keeps its original temporary path for file creation and cleanup.
+
 ## Usage with docker (compose) plugins
 
 For the token to be available in the container(s) run by docker when using those plugins in the same step as this one, you will need to make sure to share the following with the containers:
